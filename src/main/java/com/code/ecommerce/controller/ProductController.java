@@ -1,0 +1,108 @@
+package com.code.ecommerce.controller;
+
+import com.code.ecommerce.dto.request.ProductRequest;
+import com.code.ecommerce.dto.response.ResponseMessage;
+import com.code.ecommerce.service.ProductService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.code.ecommerce.constance.ResponseStatus;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
+
+@RequestMapping("/products")
+@RestController
+@Slf4j
+@RequiredArgsConstructor
+//@Api("product")
+public class ProductController {
+
+    private final ProductService productService;
+
+    @PostMapping
+//    @PreAuthorize("hasAuthority('AMIN')")
+    public ResponseEntity<ResponseMessage> createProduct(@ModelAttribute ProductRequest productRequest) throws JsonProcessingException  {
+        return ResponseEntity.ok().body(new ResponseMessage(
+                ResponseStatus.OK,
+                "Insert product successful !!",
+                productService.createProduct(productRequest)));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ResponseMessage> findById(@PathVariable(name = "id") String id) {
+        log.info("ProductController | getProductById is called");
+
+        log.info("ProductController | getProductById | productId : " + id);
+        return  ResponseEntity.ok().body(new ResponseMessage(
+                ResponseStatus.OK,
+                "Get product successful !!",
+                productService.findProductById(id)));
+    }
+
+
+    @GetMapping()
+    public ResponseEntity<ResponseMessage> getProducts(@RequestParam String searchText,
+                                      @RequestParam Integer offset,
+                                      @RequestParam Integer pageSize,
+                                      @RequestParam String sortStr) {
+        log.info("ProductController | getProducts is called");
+
+        log.info("ProductController | getProducts | offset {}, pageSize {}, sortStr {}   : ", offset, pageSize, sortStr);
+        return ResponseEntity.ok().body(new ResponseMessage(
+                ResponseStatus.OK,
+                "get product successful !!",
+                productService.getProducts(searchText, offset, pageSize, sortStr)));
+    }
+
+    @GetMapping("/filter")
+    public ResponseEntity<ResponseMessage> filterProduct(@RequestParam String categoryId,
+                                                       @RequestParam Integer offset,
+                                                       @RequestParam Integer pageSize,
+                                                       @RequestParam String brandId) {
+        return ResponseEntity.ok().body(new ResponseMessage(
+                ResponseStatus.OK,
+                "get product successful !!",
+                productService.findProductsByCategoryAndBrand( offset, pageSize,categoryId, brandId)));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ResponseMessage> delete(@PathVariable(name = "id") String id) {
+        return ResponseEntity.ok().body(new ResponseMessage(
+                ResponseStatus.OK,
+                "Delete product successful !!",
+                productService.deleteProductById(id)));
+    }
+
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ResponseMessage> update(@RequestParam(value = "image", required = false)  List<MultipartFile> files,
+                                                  @RequestParam("data") String data,
+                                                  @PathVariable(name = "id") String id) throws JsonProcessingException, IllegalAccessException  {
+        return ResponseEntity.ok().body(new ResponseMessage(
+                ResponseStatus.OK,
+                "Update product successful !!",
+                productService.updateProduct(files, data, id)));
+    }
+
+    @PutMapping("/reduce-quantity/{id}")
+    public ResponseEntity<ResponseMessage> reduceQuantity(
+            @PathVariable("id") String productId,
+            @RequestParam Integer quantity
+    ) {
+
+        log.info("ProductController | reduceQuantity is called");
+
+        log.info("ProductController | reduceQuantity | productId : " + productId);
+        log.info("ProductController | reduceQuantity | quantity : " + quantity);
+
+        productService.reduceQuantity(productId,quantity);
+        return ResponseEntity.ok().body(new ResponseMessage(
+                ResponseStatus.OK,
+                "Update product successful !!",
+                null));
+    }
+
+}
