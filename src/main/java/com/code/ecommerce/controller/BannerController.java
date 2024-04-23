@@ -3,6 +3,7 @@ package com.code.ecommerce.controller;
 import com.code.ecommerce.dto.request.BannerRequest;
 import com.code.ecommerce.constance.ResponseStatus;
 import com.code.ecommerce.dto.response.ResponseMessage;
+import com.code.ecommerce.repository.BannerRepository;
 import com.code.ecommerce.service.BannerService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class BannerController {
 
     private final BannerService bannerService;
+    private final BannerRepository bannerRepository;
 
     @PostMapping
     public ResponseEntity<ResponseMessage> create(@ModelAttribute BannerRequest bannerRequest) {
@@ -44,6 +46,14 @@ public class BannerController {
                 ResponseStatus.OK,
                 "get banner successful !!",
                 bannerService.findByCondition(searchText, offset, pageSize, sortStr)));
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<ResponseMessage> findAll() {
+        return ResponseEntity.ok().body(new ResponseMessage(
+            ResponseStatus.OK,
+            "get all banner successful !!",
+            bannerRepository.findAll()));
     }
 
     @DeleteMapping("/{id}")

@@ -16,15 +16,5 @@ public interface UserMapper extends EntityMapper<UserDto, User>{
     User reqToEntity(RegisterRequest registerRequest);
     User reqUserToEntity(UserRequest userRequest);
 
-    @Named("mappingAddress")
-    default AddressDto mappingAddress(Address address) {
-        return AddressDto.builder()
-                .id(address.getId())
-                .fullAddress(address.getFullAddress())
-                .city(address.getCity())
-                .build();
-    }
-
-    @Mapping(target = "address", source = "address", qualifiedByName = "mappingAddress")
     UserDto toDto(User user);
 }

@@ -8,7 +8,7 @@ spring:
     #    url: jdbc:mysql://mysql-springboot-container:3306/e-commerce-microservice
     url: jdbc:mysql://localhost:3306/e-commerce
     username: root
-    password: Dfer2205me
+    password: 220599
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     properties:

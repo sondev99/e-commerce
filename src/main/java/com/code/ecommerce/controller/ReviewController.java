@@ -1,54 +1,62 @@
 package com.code.ecommerce.controller;
 
 import com.code.ecommerce.constance.ResponseStatus;
-import com.code.ecommerce.dto.request.RatingRequest;
+import com.code.ecommerce.dto.request.ReviewRequest;
 import com.code.ecommerce.dto.response.PagingData;
 import com.code.ecommerce.dto.response.ResponseMessage;
-import com.code.ecommerce.service.RatingService;
+import com.code.ecommerce.service.ReviewService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-@RequestMapping("/evaluates")
+@RequestMapping("/reviews")
 @RestController
 @Slf4j
 @RequiredArgsConstructor
-public class RatingController {
+public class ReviewController {
 
-    private final RatingService ratingService;
+    private final ReviewService reviewService;
 
     @PostMapping
-    public ResponseEntity<ResponseMessage> createCategory(@Valid @RequestBody RatingRequest ratingRequest) {
+    public ResponseEntity<ResponseMessage> createCategory(@Valid @RequestBody ReviewRequest reviewRequest) {
         return ResponseEntity.ok().body(new ResponseMessage(
                 ResponseStatus.OK,
                 "Create evaluate successful !!",
-                ratingService.create(ratingRequest)));
+            reviewService.create(reviewRequest)));
 
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<ResponseMessage> update(@PathVariable String id,
-                                                  @RequestBody RatingRequest ratingRequest,
+                                                  @RequestBody ReviewRequest reviewRequest,
                                                   @RequestHeader("Authorization") String token) {
         return ResponseEntity.ok().body(new ResponseMessage(
                 ResponseStatus.OK,
                 "Update evaluate successful !!",
-                ratingService.update(id, ratingRequest, token)));
+            reviewService.update(id, reviewRequest, token)));
     }
 
     @GetMapping()
     public ResponseEntity<ResponseMessage> getAll(@RequestParam(name = "offset") Integer offset,
-                                                  @RequestParam(name = "pageSize") Integer pageSize,
+                                                  @RequestParam(name = "page_size") Integer pageSize,
                                                   @RequestParam(name = "user_id", required = false) String userId,
                                                   @RequestParam(name = "product_id") String productId) {
         PagingData evaluatesResponse;
 
         if (userId == null) {
-            evaluatesResponse = ratingService.getByProduct(offset, pageSize, productId);
+            evaluatesResponse = reviewService.getByProduct(offset, pageSize, productId);
         } else {
-            evaluatesResponse = ratingService.getByProductAndUser(offset, pageSize, productId, userId);
+            evaluatesResponse = reviewService.getByProductAndUser(offset, pageSize, productId, userId);
         }
         return ResponseEntity.ok().body(new ResponseMessage(
                 ResponseStatus.OK,

@@ -22,7 +22,6 @@ import java.io.IOException;
 @RestController
 @Slf4j
 @RequiredArgsConstructor
-//@CrossOrigin("http://localhost:3010")
 public class AuthController {
     private final AuthService authService;
 

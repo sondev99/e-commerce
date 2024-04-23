@@ -51,5 +51,5 @@ public class Product extends BaseEntity {
     private List<Image> thumbnailUrls;
 
     @OneToMany(mappedBy = "product",cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<Rating> ratings;
+    private List<Review> ratings;
 }

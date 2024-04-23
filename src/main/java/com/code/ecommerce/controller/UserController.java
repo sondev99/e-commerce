@@ -22,7 +22,7 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping("/current")
-    @PreAuthorize("hasAuthority('USER')")
+    @PreAuthorize("hasAnyAuthority('USER','ADMIN')")
     public ResponseEntity<ResponseMessage> getCurrentUser(@RequestHeader("Authorization") String token){
         return ResponseEntity
                 .status(HttpStatus.OK)

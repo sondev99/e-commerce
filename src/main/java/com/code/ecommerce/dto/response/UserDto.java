@@ -1,5 +1,6 @@
 package com.code.ecommerce.dto.response;
 
+import com.code.ecommerce.entity.Address;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -26,6 +27,6 @@ public class UserDto {
 
     private String role;
 
-    private AddressDto address;
+    private Address address;
 
 }
