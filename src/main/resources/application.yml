@@ -8,7 +8,7 @@ spring:
     #    url: jdbc:mysql://mysql-springboot-container:3306/e-commerce-microservice
     url: jdbc:mysql://localhost:3306/e-commerce
     username: root
-    password: 220599
+    password: Dfer2205me
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     properties:
@@ -35,7 +35,7 @@ storage.cloudinary.cloudName : djia7tn8l
 storage.cloudinary.apiKey : 178746625816242
 storage.cloudinary.apiSecret : 178746625816242
 
-CLIENT_BASE_URL: http://localhost:3010
+CLIENT_BASE_URL: http://localhost:3000
 
 webhook:
   webhook: whsec_e54361f57831a7e93736fda57408ded0a1b066b47c1f13665792d34bed7a2969

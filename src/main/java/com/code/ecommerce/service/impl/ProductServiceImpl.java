@@ -8,6 +8,8 @@ import com.code.ecommerce.entity.Brand;
 import com.code.ecommerce.entity.Category;
 import com.code.ecommerce.entity.Image;
 import com.code.ecommerce.entity.Product;
+import com.code.ecommerce.event.ReduceQtyData;
+import com.code.ecommerce.event.ReduceQtyEvent;
 import com.code.ecommerce.exceptions.APIException;
 import com.code.ecommerce.exceptions.MissingInputException;
 import com.code.ecommerce.exceptions.NotFoundException;
@@ -22,15 +24,15 @@ import com.code.ecommerce.service.ProductService;
 import com.code.ecommerce.utils.PaginationUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.micrometer.common.util.StringUtils;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -56,7 +58,7 @@ public class ProductServiceImpl implements ProductService {
         Map result = cloudinaryService.uploadFile(file);
         String imageUrl = (String) result.get("secure_url");
         String publicId = (String) result.get("public_id");
-        return Image.builder().publicId(publicId).thumbnailUrl(imageUrl).build();
+        return Image.builder().publicId(publicId).imageUrl(imageUrl).build();
     }
 
     @Transactional
@@ -65,12 +67,14 @@ public class ProductServiceImpl implements ProductService {
 
         Product entity = productMapper.reqToEntity(productRequest);
 
+        entity.setSalePrice(calculateSalePrice(productRequest.getPrice(),productRequest.getDiscount()));
         List<Image> galleries = productRequest.getFiles().stream().map(this::saveImageToCloud).toList();
         entity.setCategory(categoryRepository.findById(productRequest.getCategoryId()).orElseThrow(
                 () -> new NotFoundException("Can't find category with id" + productRequest.getCategoryId())));
         entity.setBrand(brandRepository.findById(productRequest.getBrandId()).orElseThrow(
                 () -> new NotFoundException("Can't find brand with id" + productRequest.getBrandId())));
-        entity.setThumbnailUrls(galleries);
+        entity.setImageUrls(galleries);
+
         return productMapper.toDto(productRepository.save(entity)).getId();
     }
 
@@ -103,7 +107,7 @@ public class ProductServiceImpl implements ProductService {
         Sort sort = PaginationUtils.buildSort(sortStr);
         Pageable pageable = PageRequest.of(offset, pageSize, sort);
 
-        if (StringUtils.isNotEmpty(searchText)) {
+        if (StringUtils.isEmpty(searchText)) {
             productPage = productRepository.findAll(pageable);
         } else {
             productPage = productRepository.findByNameContainingIgnoreCase(searchText, pageable);
@@ -152,11 +156,11 @@ public class ProductServiceImpl implements ProductService {
         ProductRequest productRequest = objectMapper.readValue(data, ProductRequest.class);
         List<Image> galleries;
         if (files != null) {
-            List<Image> imageList = currentProduct.getThumbnailUrls();
+            List<Image> imageList = currentProduct.getImageUrls();
             imageList.forEach(image -> imageService.deleteById(image.getId()));
             galleries = files.stream().map(this::saveImageToCloud).toList();
         } else {
-            galleries = currentProduct.getThumbnailUrls();
+            galleries = currentProduct.getImageUrls();
         }
 
         Brand brand = brandRepository.findById(productRequest.getBrandId())
@@ -168,15 +172,14 @@ public class ProductServiceImpl implements ProductService {
         Product newProduct = Product.builder()
                 .id(currentProduct.getId())
                 .name(productRequest.getName())
-                .thumbnailUrls(galleries)
+                .imageUrls(galleries)
                 .brand(brand)
                 .category(category)
                 .description(productRequest.getDescription())
-                .sku(productRequest.getSku())
                 .discount(productRequest.getDiscount())
                 .quantity(productRequest.getQuantity())
-                .priceUnit(productRequest.getPriceUnit())
-                .ratings(currentProduct.getRatings())
+                .price(productRequest.getPrice())
+                .reviews(currentProduct.getReviews())
                 .build();
 
         return productMapper.toDto(productRepository.save(newProduct));
@@ -186,33 +189,55 @@ public class ProductServiceImpl implements ProductService {
         if (id == null) {
             throw new MissingInputException("Missing input id");
         }
-        productRepository.deleteById(id);
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Can't find product with id " + id));
-        product.getThumbnailUrls().forEach(image ->
+        product.getImageUrls().forEach(image ->
                 cloudinaryService.deleteFile(image.getPublicId()));
+        productRepository.deleteById(id);
+
         return id;
     }
 
     @Override
-    public void reduceQuantity(String productId, Integer quantity) {
-        log.info("Reduce Quantity {} for Id: {}", quantity, productId);
+//    @KafkaListener(id = "reduceQtyGroup",topics = "update-productQty")
+    @Transactional
+    public void reduceQuantity(ReduceQtyEvent reduceQtyEvent) {
+        log.info("Got message <{}>", reduceQtyEvent.getReduceQtyDataList().toString());
+        List<ReduceQtyData> reduceQtyDataList = reduceQtyEvent.getReduceQtyDataList();
 
-        Product product
-                = productRepository.findById(productId)
-                .orElseThrow(() -> new NotFoundException(
-                        "Can't find product with id" + productId
-                ));
+        reduceQtyDataList.forEach(reduceQtyData -> {
+            Product product
+                    = productRepository.findById(reduceQtyData.getProductId())
+                    .orElseThrow(() -> new NotFoundException(
+                            "Can't find product with id" + reduceQtyData.getProductId()
+                    ));
 
-        if (product.getQuantity() < quantity) {
-            throw new APIException(
-                    "Product does not have sufficient Quantity"
-            );
-        }
+            if (product.getQuantity() < reduceQtyData.getQuantity()) {
+                throw new APIException(
+                        "Product does not have sufficient Quantity"
+                );
+            }
 
-        product.setQuantity(product.getQuantity() - quantity);
-        productRepository.save(product);
-        log.info("Product Quantity updated Successfully");
+            product.setQuantity(product.getQuantity() - reduceQtyData.getQuantity());
+            productRepository.save(product);
+            log.info("updated quantity of product {} Successfully", reduceQtyData.getProductId());
+        });
+
+
+    }
+
+    @Override
+    public List<ProductDto> getProductByCategory(String categoryId) {
+        Category category = categoryRepository.findById(categoryId).orElseThrow(() -> new NotFoundException(
+                "Can't find category with id" + categoryId
+        ));
+        List<Product> products = productRepository.findByCategory(category);
+
+        return productMapper.toDto(products);
+    }
+
+    private Double calculateSalePrice (Double price, Double discount){
+        return (1 - (discount != 0 ? discount / 100 : 0)) * (price != 0 ? price : 0);
     }
 
 }

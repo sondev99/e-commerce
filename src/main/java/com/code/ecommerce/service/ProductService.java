@@ -3,8 +3,8 @@ package com.code.ecommerce.service;
 import com.code.ecommerce.dto.request.ProductRequest;
 import com.code.ecommerce.dto.response.PagingData;
 import com.code.ecommerce.dto.response.ProductDto;
+import com.code.ecommerce.event.ReduceQtyEvent;
 import com.fasterxml.jackson.core.JsonProcessingException;
-
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -23,6 +23,7 @@ public interface ProductService {
 
     String deleteProductById(String id);
 
-    void reduceQuantity(String productId, Integer quantity);
+    void reduceQuantity(ReduceQtyEvent reduceQtyEvent);
 
+    List<ProductDto> getProductByCategory(String category);
 }

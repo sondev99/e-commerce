@@ -7,26 +7,29 @@ import jakarta.persistence.Table;
 import lombok.*;
 import org.hibernate.annotations.UuidGenerator;
 
-@Entity
 @Data
-@Table(name = "images")
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(callSuper = true)
-@Builder
-public class Image extends BaseEntity {
+@Entity
+@Table(name = "order_item")
+public class OrderItem  {
+
     @Id
     @UuidGenerator
     @Column(name = "id", unique = true, nullable = false, updatable = false)
     private String id;
 
-    @Column(name = "image_url")
-    private String imageUrl;
+    @Column(name = "quantity")
+    private Integer quantity;
 
-    @Column(name = "image_public_id")
-    private String publicId;
+    @Column(name = "product_id")
+    private String productId;
+
+    @Column(name = "user_id")
+    private String userId;
 
 //    @ManyToOne(fetch = FetchType.EAGER)
-//    @JoinColumn(name = "product_id", referencedColumnName = "id")
-//    private Product product;
+//    @JoinColumn(name = "order_id")
+//    private Order order;
 }

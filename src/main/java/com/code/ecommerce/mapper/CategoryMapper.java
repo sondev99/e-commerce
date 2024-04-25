@@ -16,23 +16,24 @@ public interface CategoryMapper extends EntityMapper<CategoryDto, Category>{
 
     Category reqToEntity(CategoryRequest categoryRequest);
 
-    @Named("mappingImageUrl")
-    default ImageDto mappingImageUrls(Image image) {
-        return ImageDto.builder()
-                .id(image.getId())
-                .thumbnailUrl(image.getThumbnailUrl())
-                .build();
+    @Named("mappingImageUrls")
+    default List<ImageDto> mappingImageUrls(List<Image> imageList) {
+        return imageList.stream().map(gallery -> ImageDto.builder()
+                .id(gallery.getId())
+                .imageUrl(gallery.getImageUrl())
+                .build()).toList();
     }
 
     @Named("mappingIconUrl")
     default ImageDto mappingIconUrl(Image image) {
         return  ImageDto.builder()
                 .id(image.getId())
-                .thumbnailUrl(image.getThumbnailUrl())
+                .imageUrl(image.getImageUrl())
                 .build();
     }
 
-    @Mapping(target = "imageUrl", source = "imageUrl", qualifiedByName = "mappingImageUrl")
+    @Mapping(target = "imageUrls", source = "imageUrls", qualifiedByName = "mappingImageUrls")
     @Mapping(target = "iconUrl", source = "iconUrl", qualifiedByName = "mappingIconUrl")
     List<CategoryDto> toDto(List<Category> categoryList);
+
 }

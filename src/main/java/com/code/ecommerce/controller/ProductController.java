@@ -2,12 +2,14 @@ package com.code.ecommerce.controller;
 
 import com.code.ecommerce.dto.request.ProductRequest;
 import com.code.ecommerce.dto.response.ResponseMessage;
+import com.code.ecommerce.event.ReduceQtyEvent;
 import com.code.ecommerce.service.ProductService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.code.ecommerce.constance.ResponseStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -23,7 +25,7 @@ public class ProductController {
     private final ProductService productService;
 
     @PostMapping
-//    @PreAuthorize("hasAuthority('AMIN')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<ResponseMessage> createProduct(@ModelAttribute ProductRequest productRequest) throws JsonProcessingException  {
         return ResponseEntity.ok().body(new ResponseMessage(
                 ResponseStatus.OK,
@@ -45,9 +47,9 @@ public class ProductController {
 
     @GetMapping()
     public ResponseEntity<ResponseMessage> getProducts(@RequestParam String searchText,
-                                      @RequestParam Integer offset,
-                                      @RequestParam Integer pageSize,
-                                      @RequestParam String sortStr) {
+                                                       @RequestParam Integer offset,
+                                                       @RequestParam Integer pageSize,
+                                                       @RequestParam String sortStr) {
         log.info("ProductController | getProducts is called");
 
         log.info("ProductController | getProducts | offset {}, pageSize {}, sortStr {}   : ", offset, pageSize, sortStr);
@@ -57,11 +59,19 @@ public class ProductController {
                 productService.getProducts(searchText, offset, pageSize, sortStr)));
     }
 
+    @GetMapping("/filter-by-cat")
+    public ResponseEntity<ResponseMessage> getProductByCategory(@RequestParam String category) {
+        return ResponseEntity.ok().body(new ResponseMessage(
+                ResponseStatus.OK,
+                "get product successful !!",
+                productService.getProductByCategory(category)));
+    }
+
     @GetMapping("/filter")
     public ResponseEntity<ResponseMessage> filterProduct(@RequestParam String categoryId,
-                                                       @RequestParam Integer offset,
-                                                       @RequestParam Integer pageSize,
-                                                       @RequestParam String brandId) {
+                                                         @RequestParam Integer offset,
+                                                         @RequestParam Integer pageSize,
+                                                         @RequestParam String brandId) {
         return ResponseEntity.ok().body(new ResponseMessage(
                 ResponseStatus.OK,
                 "get product successful !!",
@@ -87,18 +97,16 @@ public class ProductController {
                 productService.updateProduct(files, data, id)));
     }
 
-    @PutMapping("/reduce-quantity/{id}")
+    @PutMapping("/reduce-quantity")
     public ResponseEntity<ResponseMessage> reduceQuantity(
-            @PathVariable("id") String productId,
-            @RequestParam Integer quantity
+            @RequestBody ReduceQtyEvent reduceQtyEvent
     ) {
 
         log.info("ProductController | reduceQuantity is called");
 
-        log.info("ProductController | reduceQuantity | productId : " + productId);
-        log.info("ProductController | reduceQuantity | quantity : " + quantity);
 
-        productService.reduceQuantity(productId,quantity);
+
+        productService.reduceQuantity(reduceQtyEvent);
         return ResponseEntity.ok().body(new ResponseMessage(
                 ResponseStatus.OK,
                 "Update product successful !!",
