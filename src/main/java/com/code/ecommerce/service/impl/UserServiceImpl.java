@@ -143,7 +143,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public String deleteUser(String id) {
-        return null;
+        userRepository.deleteById(id);
+        return id;
     }
 
 
